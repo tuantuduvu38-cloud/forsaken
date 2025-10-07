@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Forsaken</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      overflow: hidden;
+      background-color: #111;
+      color: #fff;
+      font-family: monospace;
+    }
+    #gameCanvas {
+      display: block;
+      background: #222;
+    }
+    #timer {
+      position: absolute;
+      top: 10px;
+      left: 50%;
+      transform: translateX(-50%);
+      color: #0f0;
+      font-size: 20px;
+    }
+  </style>
+</head>
+<body>
+  <div id="timer">Time: 03:50</div>
+  <canvas id="gameCanvas" width="800" height="600"></canvas>
+  <script>
+    const canvas = document.getElementById("gameCanvas");
+    const ctx = canvas.getContext("2d");
+
+    const player = { x: 400, y: 300, color: "yellow", size: 20, speed: 3 };
+    const mobs = [];
+    const mobColors = ["lime", "cyan", "orange", "magenta", "red", "blue", "white", "gray"];
+    const killerIndex = Math.floor(Math.random() * 9);
+    const totalMobs = 8;
+
+    for (let i = 0; i < totalMobs; i++) {
+      mobs.push({
+        x: Math.random() * canvas.width,
+        y: Math.random() * canvas.height,
+        color: mobColors[i],
+        size: 15,
+        speed: 1.5 + Math.random() * 0.5,
+      });
+    }
+
+    let killer;
+    if (killerIndex === 0) killer = player;
+    else killer = mobs[killerIndex - 1];
+
+    let timeLeft = 230; // 3m50s
+    let lastTime = Date.now();
+
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "w") player.y -= player.speed;
+      if (e.key === "s") player.y += player.speed;
+      if (e.key === "a") player.x -= player.speed;
+      if (e.key === "d") player.x += player.speed;
+    });
+
+    function drawEntity(e) {
+      ctx.fillStyle = e.color;
+      ctx.fillRect(e.x, e.y, e.size, e.size);
+    }
+
+    function updateMobs() {
+      for (let mob of mobs) {
+        mob.x += (Math.random() - 0.5) * mob.speed * 2;
+        mob.y += (Math.random() - 0.5) * mob.speed * 2;
+        mob.x = Math.max(0, Math.min(canvas.width - mob.size, mob.x));
+        mob.y = Math.max(0, Math.min(canvas.height - mob.size, mob.y));
+      }
+    }
+
+    function updateTimer() {
+      const now = Date.now();
+      const delta = (now - lastTime) / 1000;
+      lastTime = now;
+      timeLeft -= delta;
+      if (timeLeft <= 0) timeLeft = 0;
+      document.getElementById("timer").textContent =
+        "Time: " + Math.floor(timeLeft / 60).toString().padStart(2, "0") + ":" +
+        Math.floor(timeLeft % 60).toString().padStart(2, "0");
+    }
+
+    function loop() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      drawEntity(player);
+      mobs.forEach(drawEntity);
+      updateMobs();
+      updateTimer();
+      requestAnimationFrame(loop);
+    }
+
+    loop();
+  </script>
+</body>
+</html>
