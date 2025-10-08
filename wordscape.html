@@ -1,759 +1,187 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="vi">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Wordscape — Level 1 (Demo)</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Wordscape - Level 1</title>
 <style>
-  :root{
-    --bg-overlay: rgba(6,16,28,0.45);
-    --accent: linear-gradient(135deg,#ffb347,#ff5e62);
-    --card-bg: rgba(255,255,255,0.06);
-    --glass: rgba(255,255,255,0.06);
-    --text: #fff;
-    --muted: rgba(255,255,255,0.65);
-    --cell-size: 56px;
-    --gap: 10px;
+  body {
+    background: #f3f6ff;
+    font-family: 'Poppins', sans-serif;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+    margin: 0;
   }
-  html,body{height:100%;margin:0;font-family:Inter,Segoe UI,system-ui,Roboto,"Helvetica Neue",Arial;}
-  body{
-    background: url('https://images.unsplash.com/photo-1501785888041-af3ef285b470?auto=format&fit=crop&w=2000&q=60') center/cover fixed no-repeat;
-    color:var(--text);
-    -webkit-font-smoothing:antialiased;
-    -moz-osx-font-smoothing:grayscale;
-    user-select:none;
-    touch-action: manipulation;
+  h1 { margin-bottom: 10px; }
+  #game {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
   }
-
-  /* overlay blur */
-  .overlay{
-    position:fixed;inset:0;background:linear-gradient(180deg,rgba(3,10,20,0.55),rgba(3,10,20,0.35));
-    backdrop-filter: blur(6px);
-    pointer-events:none;
+  #letters {
+    position: relative;
+    width: 220px;
+    height: 220px;
+    border-radius: 50%;
   }
-
-  .app {
-    position:relative;
-    max-width:760px;
-    margin:28px auto;
-    padding:18px;
-    box-sizing:border-box;
-  }
-
-  header {
-    display:flex;
-    align-items:center;
-    justify-content:space-between;
-    gap:12px;
-  }
-  .title {
-    display:flex;
-    gap:12px;
-    align-items:center;
-  }
-  .logo {
-    width:56px;height:56px;border-radius:12px;
-    background:var(--accent);display:flex;align-items:center;justify-content:center;
-    font-weight:700;font-size:18px;color:#fff;box-shadow:0 6px 20px rgba(0,0,0,0.35);
-  }
-  h1 { font-size:20px;margin:0 }
-  p.subtitle { margin:0;color:var(--muted);font-size:13px }
-
-  .controls {
-    display:flex;
-    gap:8px;
-    align-items:center;
-  }
-  .btn {
-    background:var(--card-bg);
-    border:1px solid rgba(255,255,255,0.06);
-    color:var(--text);
-    padding:8px 12px;border-radius:10px;
-    display:inline-flex;gap:8px;align-items:center;
-    cursor:pointer;font-weight:600;font-size:14px;
-    box-shadow: 0 4px 14px rgba(0,0,0,0.35);
-  }
-  .btn:active{transform:translateY(1px)}
-  .btn.secondary { background: transparent;border:1px solid rgba(255,255,255,0.06) }
-
-  main {
-    margin-top:18px;
-    display:flex;
-    gap:18px;
-    align-items:flex-start;
-  }
-
-  /* crossword column */
-  .cross-col {
-    flex:1 1 55%;
-    display:flex;
-    flex-direction:column;
-    gap:12px;
-    align-items:center;
-  }
-  .grid {
-    width: min(360px, 72vw);
-    background: linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.02));
-    padding:14px;
-    border-radius:14px;
-    box-shadow: 0 10px 30px rgba(4,12,24,0.5);
-    display:grid;
-    grid-template-rows: repeat(5, var(--cell-size));
-    grid-template-columns: repeat(5, var(--cell-size));
-    gap:8px;
-    justify-content:center;
-    align-content:center;
-  }
-  .cell {
-    width:var(--cell-size);
-    height:var(--cell-size);
-    border-radius:8px;
-    display:flex;align-items:center;justify-content:center;
-    background: rgba(255,255,255,0.02);
-    color: transparent;
-    font-weight:700;
-    font-size:20px;
-    border: 1px solid rgba(255,255,255,0.03);
-    transition: transform .18s ease, background .18s ease, color .12s ease;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.4) inset;
-    position:relative;
-    overflow:hidden;
-  }
-  .cell.revealed { color:var(--text); background: linear-gradient(180deg,#ffffff06,#ffffff03); transform:scale(1.02); border-color: rgba(255,255,255,0.08); }
-  .cell.empty { background: transparent; border: none; box-shadow:none; }
-  .cell .letter {
-    text-shadow: 0 1px 0 rgba(0,0,0,0.6);
-  }
-
-  /* Word list on the right */
-  .words-col {
-    flex:0 0 200px;
-    display:flex;
-    flex-direction:column;
-    gap:12px;
-  }
-  .words-card {
-    background: var(--card-bg);
-    padding:12px;border-radius:12px;
-    box-shadow: 0 8px 22px rgba(0,0,0,0.45);
-  }
-  .word-item {
-    display:flex;
-    align-items:center;
-    gap:10px;
-    padding:8px 6px;border-radius:8px;
-    transition: background .12s ease;
-  }
-  .word-item.found { background: linear-gradient(90deg,#60d394,#4ac3ff); color:#05211a; font-weight:700; }
-  .word-blanks { letter-spacing:6px; font-weight:700; font-size:16px; color:var(--muted); }
-  .word-length { color:var(--muted); font-size:12px; }
-
-  /* letter wheel area */
-  .letter-area {
-    margin-top:20px;
-    width:100%;
-    display:flex;
-    justify-content:center;
-    align-items:center;
-    position:relative;
-    min-height:160px;
-  }
-  .wheel {
-    width:260px;height:260px;border-radius:50%;
-    display:block;position:relative;
-    background: radial-gradient(circle at 20% 20%, rgba(255,255,255,0.03), rgba(0,0,0,0.02));
-    box-shadow: inset 0 6px 18px rgba(255,255,255,0.02), 0 12px 40px rgba(0,0,0,0.5);
-  }
-
   .letter {
-    width:74px;height:74px;border-radius:50%;
-    display:flex;align-items:center;justify-content:center;
-    position:absolute;left:50%;top:50%;
-    transform:translate(-50%,-50%);
-    background: linear-gradient(180deg,#ffcc66,#ff9966);
-    color:#fff;font-weight:800;font-size:24px;
-    cursor: pointer; user-select: none;
-    transition: transform .12s ease, box-shadow .12s ease, background .12s ease;
-    box-shadow: 0 8px 20px rgba(0,0,0,0.45);
+    position: absolute;
+    width: 70px;
+    height: 70px;
+    background: white;
+    border-radius: 50%;
+    border: 3px solid #667;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 28px;
+    font-weight: bold;
+    cursor: pointer;
+    user-select: none;
+    transition: background 0.2s, color 0.2s;
   }
-  .letter.selected {
-    transform: translate(-50%,-50%) scale(1.08);
-    filter: drop-shadow(0 6px 18px rgba(255,110,120,0.25));
-    background: linear-gradient(180deg,#ff9966,#ff5e62);
+  .letter.active {
+    background: #4a7cff;
+    color: white;
   }
-
-  .small {
-    font-size:12px;color:var(--muted);
+  #word-list {
+    margin-top: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
   }
-
-  /* svg line on top of wheel */
-  .svg-line {
-    position:absolute; left:0; top:0; width:100%; height:100%;
-    pointer-events:none;
+  .word {
+    font-size: 22px;
+    letter-spacing: 5px;
   }
-
-  /* feedback */
-  .pop {
-    animation: pop .42s ease;
+  #shuffle {
+    margin-top: 25px;
+    padding: 8px 16px;
+    background: #4a7cff;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 16px;
   }
-  .shake {
-    animation: shake .45s;
+  #message {
+    font-size: 28px;
+    margin-top: 20px;
+    color: #1d8b1d;
+    display: none;
   }
-  @keyframes pop {
-    0%{transform:scale(.8);opacity:0}
-    60%{transform:scale(1.06);opacity:1}
-    100%{transform:scale(1)}
-  }
-  @keyframes shake {
-    0%{transform:translateX(0)}
-    25%{transform:translateX(-8px)}
-    50%{transform:translateX(6px)}
-    75%{transform:translateX(-4px)}
-    100%{transform:translateX(0)}
-  }
-
-  /* bottom helper */
-  .help {
-    margin-top:10px;text-align:center;color:var(--muted);font-size:13px;
-  }
-
-  /* responsive */
-  @media (max-width:720px){
-    .app{padding:12px}
-    main{flex-direction:column;align-items:center}
-    .words-col{width:100%}
-    .grid{width:min(84vw,360px)}
-    .wheel{width:220px;height:220px}
-    .letter{width:64px;height:64px;font-size:20px}
+  canvas {
+    position: absolute;
+    top: 0; left: 0;
+    pointer-events: none;
   }
 </style>
 </head>
 <body>
-  <div class="overlay"></div>
-  <div class="app" id="app">
-    <header>
-      <div class="title">
-        <div class="logo">WS</div>
-        <div>
-          <h1>Wordscape — Level 1</h1>
-          <p class="subtitle">Drag to connect letters • Find all words</p>
-        </div>
-      </div>
-      <div class="controls">
-        <button class="btn" id="shuffleBtn" title="Shuffle letters">🔀 Shuffle</button>
-        <button class="btn secondary" id="resetBtn" title="Reset level">⟲ Reset</button>
-      </div>
-    </header>
-
-    <main>
-      <section class="cross-col">
-        <div class="grid" id="grid" aria-hidden="false"></div>
-
-        <div class="letter-area" id="letterArea">
-          <div class="wheel" id="wheel">
-            <!-- SVG path overlay for connecting line -->
-            <svg class="svg-line" id="svgLine" viewBox="0 0 100 100" preserveAspectRatio="none">
-              <defs>
-                <filter id="glow">
-                  <feGaussianBlur stdDeviation="3.2" result="coloredBlur"/>
-                  <feMerge>
-                    <feMergeNode in="coloredBlur"/>
-                    <feMergeNode in="SourceGraphic"/>
-                  </feMerge>
-                </filter>
-              </defs>
-              <path id="pathGlow" d="" stroke="rgba(255,255,255,0.95)" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round" opacity="0.95"/>
-              <path id="path" d="" stroke="rgba(255,200,120,0.95)" stroke-width="5.5" fill="none" stroke-linecap="round" stroke-linejoin="round" filter="url(#glow)" />
-            </svg>
-          </div>
-        </div>
-
-        <div class="help">
-          <div class="small">Tip: Press Shuffle to rearrange letters. Release to submit a word.</div>
-        </div>
-      </section>
-
-      <aside class="words-col">
-        <div class="words-card" id="wordsCard">
-          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
-            <strong>Words to find</strong>
-            <span class="small" id="progress">0 / 5</span>
-          </div>
-          <div id="wordList"></div>
-        </div>
-
-        <div class="words-card" style="margin-top:10px">
-          <div style="font-size:13px;color:var(--muted);line-height:1.4">
-            <strong>How to play</strong>
-            <p style="margin:6px 0 0 0;color:var(--muted)" class="small">
-              Touch or click a letter and drag across letters to form a word. Release to submit.
-            </p>
-          </div>
-        </div>
-      </aside>
-    </main>
-  </div>
-
-  <!-- Audio -->
-  <audio id="bgm" loop preload="auto" src="https://cdn.pixabay.com/download/audio/2022/11/22/audio_eb6c089d0b.mp3?filename=relaxing-guitar-loop-12613.mp3"></audio>
-  <audio id="sndClick" preload="auto" src="https://cdn.pixabay.com/download/audio/2022/03/15/audio_58c10c12f8.mp3?filename=click-124467.mp3"></audio>
-  <audio id="sndCorrect" preload="auto" src="https://cdn.pixabay.com/download/audio/2022/03/15/audio_f8d4deae3c.mp3?filename=correct-6033.mp3"></audio>
-  <audio id="sndWrong" preload="auto" src="https://cdn.pixabay.com/download/audio/2022/03/15/audio_c9a82b6a3f.mp3?filename=error-126627.mp3"></audio>
+<h1>Wordscape - Level 1</h1>
+<div id="game">
+  <div id="letters"></div>
+  <canvas id="lineCanvas" width="220" height="220"></canvas>
+  <button id="shuffle">🔀 Shuffle</button>
+  <div id="word-list"></div>
+  <div id="message">Level Complete!</div>
+</div>
 
 <script>
-/*
-  Wordscape — Level 1 (single-file)
-  Features:
-   - Drag (pointer) to select letters on a circle
-   - Line glow drawing along selected letters (SVG)
-   - Shuffle letters positions
-   - Crossword grid (5x5) with words placed; reveal on correct guesses
-   - Sounds: click / correct / wrong / bgm
-*/
+const words = ["WORD", "ROW", "DO", "OR"];
+let foundWords = new Set();
+let letters = ["W", "O", "R", "D"];
+const letterPositions = [
+  [110, 10],
+  [210, 110],
+  [110, 210],
+  [10, 110]
+];
 
-(() => {
-  // GRID & WORD DEFINITIONS (manual layout tuned to be consistent)
-  // grid rows 0..4, cols 0..4
-  const ROWS = 5, COLS = 5;
+const container = document.getElementById("letters");
+const canvas = document.getElementById("lineCanvas");
+const ctx = canvas.getContext("2d");
+const wordList = document.getElementById("word-list");
+const message = document.getElementById("message");
 
-  // Words with explicit coords: each coord = [r,c]
-  const WORDS = [
-    { id: 'WORD', word: 'WORD', coords: [[2,0],[2,1],[2,2],[2,3]] },
-    { id: 'ROW',  word: 'ROW',  coords: [[2,2],[3,2],[4,2]] }, // top-to-bottom R O W (starting at row2)
-    { id: 'DO',   word: 'DO',   coords: [[2,3],[3,3]] },
-    { id: 'OR',   word: 'OR',   coords: [[2,1],[2,2]] },
-    { id: 'OW',   word: 'OW',   coords: [[3,2],[3,3]] } // extra short word (optional)
-  ];
+letters.forEach((l, i) => {
+  const div = document.createElement("div");
+  div.className = "letter";
+  div.textContent = l;
+  div.style.left = (letterPositions[i][0]-35) + "px";
+  div.style.top = (letterPositions[i][1]-35) + "px";
+  container.appendChild(div);
+});
 
-  // derive letter map from placed coords
-  const grid = Array.from({length:ROWS},()=>Array.from({length:COLS},()=>null));
-  WORDS.forEach(w=>{
-    for(let i=0;i<w.word.length;i++){
-      const [r,c] = w.coords[i];
-      grid[r][c] = w.word[i];
-    }
+let path = [];
+let drawing = false;
+
+function drawLine() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  if (path.length < 2) return;
+  ctx.beginPath();
+  ctx.moveTo(path[0][0], path[0][1]);
+  for (let i=1; i<path.length; i++) ctx.lineTo(path[i][0], path[i][1]);
+  ctx.lineWidth = 6;
+  ctx.strokeStyle = "rgba(0, 128, 255, 0.8)";
+  ctx.shadowBlur = 12;
+  ctx.shadowColor = "deepskyblue";
+  ctx.stroke();
+}
+
+function checkWord(word) {
+  if (words.includes(word) && !foundWords.has(word)) {
+    foundWords.add(word);
+    const el = document.createElement("div");
+    el.className = "word";
+    el.textContent = word;
+    wordList.appendChild(el);
+  }
+  if (foundWords.size === words.length) {
+    message.style.display = "block";
+  }
+}
+
+container.addEventListener("mousedown", e => {
+  if (e.target.classList.contains("letter")) {
+    drawing = true;
+    e.target.classList.add("active");
+    path = [[e.target.offsetLeft+35, e.target.offsetTop+35]];
+  }
+});
+
+container.addEventListener("mousemove", e => {
+  if (!drawing) return;
+  const target = e.target;
+  if (target.classList.contains("letter") && !target.classList.contains("active")) {
+    target.classList.add("active");
+    path.push([target.offsetLeft+35, target.offsetTop+35]);
+  }
+  drawLine();
+});
+
+document.addEventListener("mouseup", () => {
+  if (drawing) {
+    const selected = Array.from(document.querySelectorAll(".letter.active"))
+      .map(l => l.textContent)
+      .join("");
+    checkWord(selected);
+    document.querySelectorAll(".letter").forEach(l => l.classList.remove("active"));
+    path = [];
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+  }
+  drawing = false;
+});
+
+document.getElementById("shuffle").onclick = () => {
+  letters.sort(() => Math.random() - 0.5);
+  document.querySelectorAll(".letter").forEach((l, i) => {
+    l.textContent = letters[i];
   });
-
-  // unique letters used in pool (set order can be shuffled)
-  const lettersSet = new Set();
-  for(let r=0;r<ROWS;r++){
-    for(let c=0;c<COLS;c++){
-      if(grid[r][c]) lettersSet.add(grid[r][c]);
-    }
-  }
-  // We'll pick 4 letters for the wheel (as typical Wordscapes). If more present, take first 6; here there are W,O,R,D
-  const POOL_LETTERS = Array.from(lettersSet).slice(0,6);
-
-  // DOM refs
-  const gridEl = document.getElementById('grid');
-  const wordListEl = document.getElementById('wordList');
-  const progressEl = document.getElementById('progress');
-  const wheelEl = document.getElementById('wheel');
-  const svgLine = document.getElementById('svgLine');
-  const path = document.getElementById('path');
-  const pathGlow = document.getElementById('pathGlow');
-  const shuffleBtn = document.getElementById('shuffleBtn');
-  const resetBtn = document.getElementById('resetBtn');
-
-  const bgm = document.getElementById('bgm');
-  const sndClick = document.getElementById('sndClick');
-  const sndCorrect = document.getElementById('sndCorrect');
-  const sndWrong = document.getElementById('sndWrong');
-
-  // autoplay: many browsers block autoplay unless user interacts; we start with low volume and try to play when user interacts
-  bgm.volume = 0.18;
-  bgm.muted = false;
-
-  // state
-  const found = new Set();
-  const revealed = Array.from({length:ROWS}, ()=>Array.from({length:COLS}, ()=>false));
-  let letterEls = []; // DOM references to wheel letters
-  let positions = [];  // array of {x,y} centers (client coords) updated on layout
-  let selectState = {
-    active: false,
-    selectedEls: [],
-    selectedLetters: [],
-    pointerId: null
-  };
-
-  // initialize UI
-  function renderGrid(){
-    gridEl.innerHTML = '';
-    // create ROWS x COLS cells in CSS grid order
-    for(let r=0;r<ROWS;r++){
-      for(let c=0;c<COLS;c++){
-        const val = grid[r][c];
-        const cell = document.createElement('div');
-        cell.className = 'cell' + (val ? '' : ' empty');
-        cell.dataset.r = r;
-        cell.dataset.c = c;
-        if(val && revealed[r][c]){
-          cell.classList.add('revealed');
-          cell.innerHTML = `<div class="letter">${val}</div>`;
-        } else {
-          cell.innerHTML = '';
-        }
-        gridEl.appendChild(cell);
-      }
-    }
-  }
-
-  function renderWordList(){
-    wordListEl.innerHTML = '';
-    WORDS.forEach(w=>{
-      const row = document.createElement('div');
-      row.className = 'word-item' + (found.has(w.word) ? ' found' : '');
-      const blanks = document.createElement('div');
-      blanks.className = 'word-blanks';
-      if(found.has(w.word)){
-        blanks.textContent = w.word;
-      } else {
-        // show underscores separated
-        blanks.textContent = w.word.split('').map(()=>'_').join(' ');
-      }
-      const meta = document.createElement('div');
-      meta.className = 'word-length small';
-      meta.textContent = `${w.word.length} letters`;
-      row.appendChild(blanks);
-      row.appendChild(meta);
-      // click to reveal example (only if found)
-      wordListEl.appendChild(row);
-    });
-    progressEl.textContent = `${found.size} / ${WORDS.length}`;
-  }
-
-  // reveal word on board
-  function revealWord(word){
-    const wobj = WORDS.find(w=>w.word === word);
-    if(!wobj) return;
-    for(let i=0;i<wobj.coords.length;i++){
-      const [r,c] = wobj.coords[i];
-      revealed[r][c] = true;
-    }
-    renderGrid();
-    renderWordList();
-  }
-
-  // fill initial grid (no revealed cells)
-  renderGrid();
-  renderWordList();
-
-  // create wheel letters
-  function buildWheel(letterPool = POOL_LETTERS){
-    wheelEl.innerHTML = ''; letterEls = [];
-    // place letters on circle positions (arranged evenly)
-    const N = letterPool.length;
-    const radius = 86; // px offset from center inside .wheel
-    // create absolute-positioned letter elements
-    for(let i=0;i<N;i++){
-      const el = document.createElement('div');
-      el.className = 'letter';
-      el.dataset.letter = letterPool[i];
-      el.textContent = letterPool[i];
-      el.setAttribute('role','button');
-      el.setAttribute('aria-label',`letter ${letterPool[i]}`);
-      wheelEl.appendChild(el);
-      letterEls.push(el);
-    }
-    // compute positions
-    layoutLetters();
-  }
-
-  function layoutLetters(startAngle = 0){
-    // calculate centers inside wheel (client coords computed later)
-    const N = letterEls.length;
-    const box = wheelEl.getBoundingClientRect();
-    const cx = box.left + box.width/2;
-    const cy = box.top + box.height/2;
-    const r = Math.min(box.width, box.height)/2 - 50; // radius to place letters
-    positions = [];
-    for(let i=0;i<N;i++){
-      const angle = startAngle + (i * (360/N));
-      const rad = (angle - 90) * (Math.PI/180); // -90 so first is top
-      const x = cx + Math.cos(rad)*r;
-      const y = cy + Math.sin(rad)*r;
-      // set element transform using percent-based left/top so responsiveness works
-      const el = letterEls[i];
-      const left = ( (Math.cos(rad)*r) + (box.width/2) );
-      const top = ( (Math.sin(rad)*r) + (box.height/2) );
-      // position inside wheel using absolute pixel offsets relative to wheel box
-      el.style.left = `${left}px`;
-      el.style.top = `${top}px`;
-      positions.push({x:left + box.left - 0, y: top + box.top - 0, el});
-    }
-    // update SVG viewBox / scale to wheelEl size for path drawing convenience
-    updateSvgScale();
-  }
-
-  function updateSvgScale(){
-    // Make svg width/height match wheel box to compute path coordinates relative to wheel element
-    const svg = svgLine;
-    const box = wheelEl.getBoundingClientRect();
-    svg.style.width = box.width + 'px';
-    svg.style.height = box.height + 'px';
-    svg.setAttribute('viewBox', `0 0 ${box.width} ${box.height}`);
-  }
-
-  // compute letter center relative to wheel svg coordinates
-  function centerOfElementInSVG(el){
-    const wheelBox = wheelEl.getBoundingClientRect();
-    const elBox = el.getBoundingClientRect();
-    return {
-      x: (elBox.left + elBox.width/2) - wheelBox.left,
-      y: (elBox.top + elBox.height/2) - wheelBox.top
-    };
-  }
-
-  // handle pointer interactions
-  function pointerDown(e){
-    // start only if pointer on a letter
-    const target = e.target.closest('.letter');
-    if(!target) return;
-    // ensure BGM plays once user interacts (browsers require)
-    try { bgm.play().catch(()=>{}); } catch(e){/*ignore*/}
-
-    e.preventDefault();
-    selectState.active = true;
-    selectState.pointerId = e.pointerId || null;
-    selectState.selectedEls = [];
-    selectState.selectedLetters = [];
-    document.addEventListener('pointermove', pointerMove);
-    document.addEventListener('pointerup', pointerUp);
-    // capture pointer on current target if possible
-    if(e.target.setPointerCapture) {
-      try { e.target.setPointerCapture(e.pointerId); } catch(err){}
-    }
-
-    // if starting on a letter, add it
-    addLetterIfNew(target);
-  }
-
-  function pointerMove(e){
-    if(!selectState.active) return;
-    e.preventDefault();
-    // compute element under pointer
-    const elem = document.elementFromPoint(e.clientX, e.clientY);
-    const letter = elem ? elem.closest('.letter') : null;
-    if(letter) addLetterIfNew(letter);
-    // update path for visual feedback (selected centers + current pointer)
-    updatePathWithCurrent({clientX:e.clientX, clientY:e.clientY});
-  }
-
-  function pointerUp(e){
-    if(!selectState.active) return;
-    e.preventDefault();
-    selectState.active = false;
-    document.removeEventListener('pointermove', pointerMove);
-    document.removeEventListener('pointerup', pointerUp);
-    // finalize path -> check word
-    finalizeSelection();
-    // clear path after short delay
-    clearPath();
-    // release pointer capture
-    if(e.target && e.target.releasePointerCapture) {
-      try { e.target.releasePointerCapture(e.pointerId); } catch(err){}
-    }
-  }
-
-  function addLetterIfNew(letterEl){
-    if(!letterEl) return;
-    if(selectState.selectedEls.includes(letterEl)) return; // no repeats in a single selection
-    // highlight
-    letterEl.classList.add('selected');
-    selectState.selectedEls.push(letterEl);
-    selectState.selectedLetters.push(letterEl.dataset.letter || letterEl.textContent);
-    // play click
-    sndClick.currentTime = 0; sndClick.play().catch(()=>{});
-    updatePath(); // recalc full path
-  }
-
-  function updatePath(){
-    // build path between centers of selectedEls
-    if(selectState.selectedEls.length === 0){
-      path.setAttribute('d','');
-      pathGlow.setAttribute('d','');
-      return;
-    }
-    const wheelBox = wheelEl.getBoundingClientRect();
-    const pts = selectState.selectedEls.map(el => centerOfElementInSVG(el));
-    // create path string in SVG coordinates
-    let d = `M ${pts[0].x} ${pts[0].y}`;
-    for(let i=1;i<pts.length;i++){
-      d += ` L ${pts[i].x} ${pts[i].y}`;
-    }
-    path.setAttribute('d', d);
-    pathGlow.setAttribute('d', d);
-  }
-
-  function updatePathWithCurrent(pointer){
-    // pointer is client coords; map to svg local coords
-    const wheelBox = wheelEl.getBoundingClientRect();
-    const relX = pointer.clientX - wheelBox.left;
-    const relY = pointer.clientY - wheelBox.top;
-    if(selectState.selectedEls.length === 0){
-      // just draw nothing or tiny line to pointer if starting from center? skip
-      path.setAttribute('d', '');
-      pathGlow.setAttribute('d','');
-      return;
-    }
-    const pts = selectState.selectedEls.map(el => centerOfElementInSVG(el));
-    let d = `M ${pts[0].x} ${pts[0].y}`;
-    for(let i=1;i<pts.length;i++){
-      d += ` L ${pts[i].x} ${pts[i].y}`;
-    }
-    d += ` L ${relX} ${relY}`;
-    path.setAttribute('d', d);
-    pathGlow.setAttribute('d', d);
-  }
-
-  function clearPath(){
-    // remove selected highlight and clear path
-    selectState.selectedEls.forEach(el=>el.classList.remove('selected'));
-    selectState.selectedEls = [];
-    selectState.selectedLetters = [];
-    path.setAttribute('d','');
-    pathGlow.setAttribute('d','');
-  }
-
-  function finalizeSelection(){
-    const word = selectState.selectedLetters.join('').toUpperCase();
-    if(!word) return;
-    // find matching word in WORDS not yet found
-    const match = WORDS.find(w=>w.word === word);
-    if(match && !found.has(word)){
-      found.add(word);
-      // reveal on grid
-      revealWord(word);
-      // feedback: pop animation on the cells
-      // find cells in DOM and add pop class
-      match.coords.forEach(([r,c])=>{
-        const selector = `.cell[data-r="${r}"][data-c="${c}"]`;
-        const cell = gridEl.querySelector(selector);
-        if(cell){
-          cell.classList.add('pop');
-          setTimeout(()=>cell.classList.remove('pop'),520);
-        }
-      });
-      sndCorrect.currentTime = 0; sndCorrect.play().catch(()=>{});
-      // if completed all words, celebration
-      if(found.size === WORDS.length){
-        setTimeout(()=>levelComplete(),350);
-      }
-    } else {
-      // wrong word: shake letters and show wrong sound
-      selectState.selectedEls.forEach(el=>{
-        el.classList.add('shake');
-        setTimeout(()=>el.classList.remove('shake'),480);
-      });
-      sndWrong.currentTime = 0; sndWrong.play().catch(()=>{});
-    }
-    // clear selection
-    selectState.selectedEls.forEach(el=>el.classList.remove('selected'));
-    selectState.selectedEls = [];
-    selectState.selectedLetters = [];
-    updatePath();
-    renderWordList();
-  }
-
-  // shuffle letters positions and optionally the letter pool
-  function shuffleLetters(){
-    // randomize the order of letterEls array for layout order
-    const order = letterEls.slice();
-    // shuffle array
-    for(let i=order.length-1;i>0;i--){
-      const j = Math.floor(Math.random()*(i+1));
-      [order[i],order[j]] = [order[j],order[i]];
-    }
-    // re-append in new order to wheel
-    order.forEach(el=>wheelEl.appendChild(el));
-    // randomly rotate starting angle
-    const startAngle = Math.floor(Math.random()*360);
-    // recompute layout
-    // ensure layout after repaint (small timeout so bounding boxes updated)
-    requestAnimationFrame(()=> layoutLetters(startAngle) );
-  }
-
-  // reset level
-  function resetLevel(){
-    found.clear();
-    for(let r=0;r<ROWS;r++) for(let c=0;c<COLS;c++) revealed[r][c] = false;
-    renderGrid();
-    renderWordList();
-    clearPath();
-  }
-
-  function levelComplete(){
-    // fun pop & sound
-    sndCorrect.currentTime = 0; sndCorrect.play().catch(()=>{});
-    // small celebratory animation on grid
-    const allCells = gridEl.querySelectorAll('.cell.revealed');
-    allCells.forEach((cell,i)=>{
-      setTimeout(()=> cell.classList.add('pop'), i*40);
-      setTimeout(()=> cell.classList.remove('pop'), 650 + i*40);
-    });
-    setTimeout(()=> {
-      alert('🎉 Congratulations! You found all words for Level 1.');
-    },650);
-  }
-
-  // build wheel initially
-  buildWheel(POOL_LETTERS);
-
-  // layout letters when window resizes (responsive)
-  window.addEventListener('resize', ()=> {
-    layoutLetters();
-    updateSvgScale();
-  });
-
-  // attach pointer events
-  wheelEl.addEventListener('pointerdown', pointerDown);
-
-  // shuffle & reset handlers
-  shuffleBtn.addEventListener('click', () => {
-    shuffleLetters();
-  });
-  resetBtn.addEventListener('click', () => {
-    resetLevel();
-  });
-
-  // attempt to play bgm on first user interaction (some browsers block autoplay)
-  document.addEventListener('click', function playBgmOnce(){
-    if(bgm.paused){
-      bgm.play().catch(()=>{/*ignore*/});
-    }
-    document.removeEventListener('click', playBgmOnce);
-  });
-
-  // initial layout call (after DOM paint)
-  requestAnimationFrame(()=> {
-    layoutLetters( -10 );
-    updateSvgScale();
-  });
-
-  // Accessibility: allow clicking letters (not dragging) also to select
-  wheelEl.addEventListener('click', (e) => {
-    if(selectState.active) return; // ignore if dragging
-    const t = e.target.closest('.letter');
-    if(!t) return;
-    // quick click sequence: add letter, small timeout, finalize selection automatically after 350ms
-    addLetterIfNew(t);
-    // small delay to allow multiple clicks; we finalize if user doesn't add more letters
-    setTimeout(()=>{
-      if(selectState.selectedLetters.length>0){
-        finalizeSelection();
-      }
-    }, 420);
-  });
-
-  // expose some debug in console (optional)
-  window.WORDSCAPE = {
-    reset: resetLevel,
-    shuffle: shuffleLetters,
-    revealWord: (w)=>{ found.add(w); revealWord(w); },
-    state: ()=>({found:Array.from(found)})
-  };
-
-})();
+};
 </script>
 </body>
 </html>
