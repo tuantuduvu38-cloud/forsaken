@@ -1,290 +1,248 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Wordscape - Level 1</title>
 <style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
   body {
-    margin: 0;
     font-family: 'Poppins', sans-serif;
     height: 100vh;
-    overflow: hidden;
+    background: url('https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=1600&q=80') center/cover no-repeat;
     display: flex;
     flex-direction: column;
-    justify-content: flex-end;
     align-items: center;
-    background: url('https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=1600&q=80') no-repeat center center/cover;
+    justify-content: center;
+    user-select: none;
+    overflow: hidden;
   }
 
   .overlay {
     position: absolute;
-    width: 100%;
-    height: 100%;
-    background: rgba(0, 50, 100, 0.35);
-    top: 0;
-    left: 0;
-    z-index: 0;
+    inset: 0;
+    background: rgba(0,0,0,0.3);
+    backdrop-filter: blur(4px);
+  }
+
+  h1 {
+    color: white;
+    font-size: 2.5em;
+    margin-bottom: 20px;
+    z-index: 2;
+    text-shadow: 0 2px 8px rgba(0,0,0,0.8);
   }
 
   .board {
-    position: relative;
-    z-index: 2;
-    width: 320px;
-    text-align: center;
-    color: white;
-    margin-bottom: 80px;
-  }
-
-  .word-slot {
     display: flex;
-    justify-content: center;
-    gap: 5px;
-    margin-bottom: 20px;
-  }
-
-  .slot {
-    width: 50px;
-    height: 50px;
-    border-bottom: 3px solid rgba(255,255,255,0.6);
-    display: flex;
-    justify-content: center;
+    flex-direction: column;
     align-items: center;
-    font-size: 28px;
+    gap: 10px;
+    z-index: 2;
+    margin-bottom: 50px;
+  }
+
+  .row {
+    display: flex;
+    gap: 10px;
+  }
+
+  .cell {
+    width: 60px;
+    height: 60px;
+    border-radius: 12px;
+    background: rgba(255,255,255,0.8);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5em;
+    color: #333;
     font-weight: bold;
-    color: transparent;
-    transition: 0.3s;
-  }
-
-  .slot.filled {
-    color: #fff;
-    text-shadow: 0 0 10px #33ccff;
-  }
-
-  canvas {
-    position: absolute;
-    top: 0;
-    left: 0;
-    z-index: 1;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.3);
   }
 
   .letters {
+    position: relative;
+    z-index: 3;
     display: flex;
     justify-content: center;
     align-items: center;
-    gap: 25px;
-    position: relative;
-    z-index: 2;
-    margin-bottom: 60px;
+    gap: 30px;
   }
 
   .letter {
-    width: 65px;
-    height: 65px;
+    width: 80px;
+    height: 80px;
     border-radius: 50%;
-    background: radial-gradient(circle at top left, #33ccff, #0066cc);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    font-size: 32px;
-    font-weight: bold;
+    background: radial-gradient(circle at top left, #ffa74d, #ff6f00);
     color: white;
+    font-size: 2em;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.4);
     cursor: pointer;
-    box-shadow: 0 0 10px #33ccff;
-    transition: transform 0.2s, box-shadow 0.2s;
+    transition: transform 0.2s;
   }
+  .letter:active { transform: scale(0.95); }
 
-  .letter.active {
-    transform: scale(1.2);
-    box-shadow: 0 0 20px #99e6ff;
-  }
-
-  .controls {
-    position: relative;
-    z-index: 2;
-    margin-bottom: 30px;
+  canvas {
+    position: absolute;
+    top: 0; left: 0;
+    z-index: 1;
   }
 
   button {
-    background: rgba(255,255,255,0.2);
-    border: 1px solid rgba(255,255,255,0.4);
+    z-index: 2;
+    margin-top: 30px;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 8px;
+    background: #4da3ff;
     color: white;
-    font-size: 16px;
-    padding: 8px 16px;
-    border-radius: 10px;
+    font-size: 1.2em;
     cursor: pointer;
-    transition: 0.3s;
+    box-shadow: 0 3px 8px rgba(0,0,0,0.3);
   }
-
   button:hover {
-    background: rgba(255,255,255,0.4);
-  }
-
-  .popup {
-    position: fixed;
-    top: 0; left: 0;
-    width: 100%; height: 100%;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    background: rgba(0,0,0,0.7);
-    color: white;
-    font-size: 36px;
-    font-weight: bold;
-    display: none;
-    flex-direction: column;
-    z-index: 10;
-  }
-
-  .popup button {
-    margin-top: 20px;
+    background: #2f8cff;
   }
 </style>
 </head>
 <body>
 <div class="overlay"></div>
-<canvas id="lineCanvas"></canvas>
+<h1>Wordscape - Level 1</h1>
 
 <div class="board">
-  <div id="word1" class="word-slot">
-    <div class="slot"></div>
-    <div class="slot"></div>
-    <div class="slot"></div>
-    <div class="slot"></div>
+  <div class="row">
+    <div class="cell" data-word="WORD" data-index="0"></div>
+    <div class="cell" data-word="WORD" data-index="1"></div>
+    <div class="cell" data-word="WORD" data-index="2"></div>
+    <div class="cell" data-word="WORD" data-index="3"></div>
+  </div>
+  <div class="row">
+    <div class="cell" data-word="ROW" data-index="0"></div>
+    <div class="cell" data-word="ROW" data-index="1"></div>
+    <div class="cell" data-word="ROW" data-index="2"></div>
+  </div>
+  <div class="row">
+    <div class="cell" data-word="DO" data-index="0"></div>
+    <div class="cell" data-word="DO" data-index="1"></div>
   </div>
 </div>
 
+<canvas id="lineCanvas"></canvas>
+
 <div class="letters" id="letters"></div>
-
-<div class="controls">
-  <button id="shuffleBtn">Shuffle</button>
-</div>
-
-<div class="popup" id="popup">
-  <div>LEVEL COMPLETE!</div>
-  <button onclick="location.reload()">Next Level</button>
-</div>
-
-<audio id="bgMusic" src="https://cdn.pixabay.com/download/audio/2022/03/14/audio_2f558a4f35.mp3?filename=relaxing-music-ambient-110397.mp3" loop></audio>
-<audio id="ding" src="https://cdn.pixabay.com/download/audio/2021/08/04/audio_8f0339c7c3.mp3?filename=correct-2-46134.mp3"></audio>
+<button id="shuffleBtn">🔄 Shuffle</button>
 
 <script>
-const lettersContainer = document.getElementById('letters');
+const words = ["WORD","ROW","DO"];
+let letters = Array.from(new Set(words.join('').split('')));
+const lettersDiv = document.getElementById('letters');
 const canvas = document.getElementById('lineCanvas');
 const ctx = canvas.getContext('2d');
-const slots = document.querySelectorAll('.slot');
-const popup = document.getElementById('popup');
-const bgMusic = document.getElementById('bgMusic');
-const ding = document.getElementById('ding');
-
-const validWords = ["WORD", "ROW", "OR", "DO"];
-const letters = ["W", "O", "R", "D"];
-
-let currentWord = "";
-let usedWords = [];
-let letterElements = [];
-let dragging = false;
-let lastPos = null;
-
 canvas.width = window.innerWidth;
 canvas.height = window.innerHeight;
 
-bgMusic.volume = 0.4;
-bgMusic.play().catch(()=>{});
+let selected = [];
+let dragging = false;
+let currentMouse = {x:0, y:0};
 
-function drawLine(from, to) {
+function drawLine(from, to, glow=false) {
+  ctx.strokeStyle = glow ? "rgba(0,200,255,0.8)" : "rgba(255,255,255,0.5)";
+  ctx.lineWidth = 8;
+  ctx.shadowColor = "rgba(0,255,255,0.7)";
+  ctx.shadowBlur = glow ? 15 : 0;
   ctx.beginPath();
   ctx.moveTo(from.x, from.y);
   ctx.lineTo(to.x, to.y);
-  ctx.strokeStyle = "rgba(0,200,255,0.8)";
-  ctx.lineWidth = 6;
-  ctx.shadowBlur = 10;
-  ctx.shadowColor = "#33ccff";
   ctx.stroke();
 }
 
-function clearLines() {
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
+function redrawLines() {
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  for (let i=0;i<selected.length-1;i++) {
+    drawLine(selected[i].center, selected[i+1].center, true);
+  }
+  if (dragging && selected.length>0) {
+    drawLine(selected[selected.length-1].center, currentMouse, false);
+  }
 }
 
-function shuffle() {
-  for (let i = letters.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [letters[i], letters[j]] = [letters[j], letters[i]];
-  }
+function shuffleLetters() {
+  letters.sort(()=>Math.random()-0.5);
   renderLetters();
 }
 
 function renderLetters() {
-  lettersContainer.innerHTML = "";
-  letters.forEach(letter => {
-    const el = document.createElement("div");
-    el.className = "letter";
-    el.textContent = letter;
-    lettersContainer.appendChild(el);
-    letterElements.push(el);
+  lettersDiv.innerHTML = '';
+  letters.forEach(l=>{
+    const el = document.createElement('div');
+    el.className='letter';
+    el.textContent=l;
+    lettersDiv.appendChild(el);
   });
 }
+renderLetters();
 
-function resetSlots() {
-  slots.forEach(s => {
-    s.textContent = "";
-    s.classList.remove("filled");
-  });
+lettersDiv.addEventListener('mousedown', startDrag);
+lettersDiv.addEventListener('touchstart', startDrag);
+window.addEventListener('mousemove', moveDrag);
+window.addEventListener('touchmove', moveDrag);
+window.addEventListener('mouseup', endDrag);
+window.addEventListener('touchend', endDrag);
+document.getElementById('shuffleBtn').addEventListener('click', shuffleLetters);
+
+function getCenter(el) {
+  const rect = el.getBoundingClientRect();
+  return {x: rect.left+rect.width/2, y: rect.top+rect.height/2};
 }
 
-lettersContainer.addEventListener("mousedown", e => {
-  if (e.target.classList.contains("letter")) {
-    dragging = true;
-    currentWord = "";
-    clearLines();
-    lastPos = e.target.getBoundingClientRect();
-    e.target.classList.add("active");
-    currentWord += e.target.textContent;
+function startDrag(e) {
+  e.preventDefault();
+  dragging=true;
+  selected=[];
+  const target = document.elementFromPoint(
+    e.touches?e.touches[0].clientX:e.clientX,
+    e.touches?e.touches[0].clientY:e.clientY
+  );
+  if(target.classList.contains('letter')){
+    selected.push({letter: target.textContent, center: getCenter(target)});
   }
-});
+}
 
-window.addEventListener("mousemove", e => {
-  if (!dragging) return;
-  clearLines();
-  const activeLetters = document.querySelectorAll('.letter.active');
-  let lastBox = null;
-  activeLetters.forEach((l, i) => {
-    const rect = l.getBoundingClientRect();
-    const mid = { x: rect.x + rect.width/2, y: rect.y + rect.height/2 };
-    if (i > 0) drawLine(lastBox, mid);
-    lastBox = mid;
-  });
-  drawLine(lastBox, {x: e.clientX, y: e.clientY});
-});
-
-window.addEventListener("mouseup", e => {
-  if (!dragging) return;
-  dragging = false;
-  clearLines();
-  const activeLetters = document.querySelectorAll('.letter.active');
-  currentWord = Array.from(activeLetters).map(l => l.textContent).join("");
-  activeLetters.forEach(l => l.classList.remove("active"));
-
-  if (validWords.includes(currentWord) && !usedWords.includes(currentWord)) {
-    ding.play();
-    usedWords.push(currentWord);
-    const slotRow = document.getElementById("word1").querySelectorAll('.slot');
-    if (currentWord === "WORD") {
-      slotRow.forEach((s, i) => {
-        s.textContent = currentWord[i];
-        s.classList.add("filled");
-      });
+function moveDrag(e) {
+  if(!dragging) return;
+  const x = e.touches?e.touches[0].clientX:e.clientX;
+  const y = e.touches?e.touches[0].clientY:e.clientY;
+  currentMouse = {x,y};
+  const target = document.elementFromPoint(x,y);
+  if(target && target.classList.contains('letter')) {
+    const letter = target.textContent;
+    if(!selected.find(s=>s.letter===letter && s.center.x===getCenter(target).x)){
+      selected.push({letter, center: getCenter(target)});
     }
   }
+  redrawLines();
+}
 
-  if (usedWords.includes("WORD") && usedWords.includes("ROW") && usedWords.includes("OR") && usedWords.includes("DO")) {
-    setTimeout(()=> popup.style.display="flex", 500);
+function endDrag() {
+  if(!dragging) return;
+  dragging=false;
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  const formedWord = selected.map(s=>s.letter).join('');
+  if(words.includes(formedWord)){
+    document.querySelectorAll(`.cell[data-word="${formedWord}"]`).forEach((cell,i)=>{
+      cell.textContent = formedWord[i];
+    });
+    alert(`✅ You found: ${formedWord}`);
   }
-});
+  selected=[];
+}
 
-document.getElementById('shuffleBtn').addEventListener('click', shuffle);
-renderLetters();
+document.addEventListener('selectstart', e => e.preventDefault());
 </script>
 </body>
 </html>
