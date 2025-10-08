@@ -1,151 +1,208 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="vi">
 <head>
   <meta charset="UTF-8">
-  <title>Forsaken - Gameplay</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Forsaken - Gameplay (Walls Fixed)</title>
   <style>
-    html, body {
+    body {
       margin: 0;
-      padding: 0;
       overflow: hidden;
-      background: #000;
+      background: #111;
       color: white;
       font-family: monospace;
     }
-    #timer {
+    #ui {
       position: absolute;
       top: 10px;
       left: 10px;
+      font-size: 18px;
       background: rgba(0,0,0,0.5);
-      padding: 6px 12px;
+      padding: 6px 10px;
       border-radius: 8px;
-      font-size: 20px;
-      color: #00ff99;
     }
-    canvas {
-      display: block;
-      margin: 0 auto;
-      background: radial-gradient(circle at center, #101010, #000);
-    }
+    canvas { display: block; }
   </style>
 </head>
 <body>
-  <div id="timer">⏱ 03:50</div>
-  <canvas id="gameCanvas" width="900" height="600"></canvas>
+  <div id="ui">
+    <div id="timer">⏱ 3:50</div>
+  </div>
+  <canvas id="game"></canvas>
 
   <script>
-    const canvas = document.getElementById('gameCanvas');
-    const ctx = canvas.getContext('2d');
-    const timerDisplay = document.getElementById('timer');
+    const canvas = document.getElementById("game");
+    const ctx = canvas.getContext("2d");
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
 
-    // Timer setup
-    let time = 3 * 60 + 50; // 3m50s
-    setInterval(() => {
-      if (time > 0) time--;
-      const m = Math.floor(time / 60);
-      const s = String(time % 60).padStart(2, '0');
-      timerDisplay.textContent = `⏱ ${m}:${s}`;
-    }, 1000);
-
-    // Player setup
-    const player = { x: 450, y: 300, r: 14, color: 'deepskyblue', speed: 3 };
-    const keys = {};
-
-    // Mobs
-    const mobs = [];
-    const totalMobs = 8;
-    const killerIndex = Math.floor(Math.random() * totalMobs);
-    for (let i = 0; i < totalMobs; i++) {
-      mobs.push({
-        x: Math.random() * canvas.width,
-        y: Math.random() * canvas.height,
-        r: 14,
-        color: i === killerIndex ? 'red' : 'limegreen',
-      });
-    }
-
-    // Random walls
+    // --- RANDOM WALLS ---
     const walls = [];
-    const wallCount = 8 + Math.floor(Math.random() * 5); // 8–12 walls
+    const wallCount = Math.floor(Math.random() * 5) + 5; // 5–9 walls
     for (let i = 0; i < wallCount; i++) {
-      const w = 50 + Math.random() * 80;
-      const h = 30 + Math.random() * 70;
+      const w = 80 + Math.random() * 40;
+      const h = 15;
       walls.push({
         x: Math.random() * (canvas.width - w),
         y: Math.random() * (canvas.height - h),
         w, h,
-        color: '#555'
+        color: "#666"
       });
     }
 
-    // Input control
-    window.addEventListener('keydown', e => keys[e.key.toLowerCase()] = true);
-    window.addEventListener('keyup', e => keys[e.key.toLowerCase()] = false);
+    // --- COLLISION HELPERS ---
+    function collideCircleRect(c, r) {
+      const closestX = Math.max(r.x, Math.min(c.x, r.x + r.w));
+      const closestY = Math.max(r.y, Math.min(c.y, r.y + r.h));
+      const dx = c.x - closestX;
+      const dy = c.y - closestY;
+      return (dx * dx + dy * dy) < (c.radius * c.radius);
+    }
 
-    function movePlayer() {
-      let dx = 0, dy = 0;
-      if (keys['w']) dy -= player.speed;
-      if (keys['s']) dy += player.speed;
-      if (keys['a']) dx -= player.speed;
-      if (keys['d']) dx += player.speed;
+    // --- SAFE SPAWN ---
+    function spawnSafe(entity, radius) {
+      let tries = 0;
+      do {
+        entity.x = Math.random() * canvas.width;
+        entity.y = Math.random() * canvas.height;
+        let bad = false;
+        for (const w of walls) {
+          if (collideCircleRect({x: entity.x, y: entity.y, radius}, w)) {
+            bad = true;
+            break;
+          }
+        }
+        if (!bad) break;
+        tries++;
+      } while (tries < 50);
+    }
 
-      const nextX = player.x + dx;
-      const nextY = player.y + dy;
+    // --- PLAYER ---
+    const player = {
+      x: 0, y: 0,
+      color: "deepskyblue",
+      speed: 0.25,
+      radius: 15,
+    };
+    spawnSafe(player, player.radius);
 
-      if (!collides(nextX, nextY, player.r)) {
-        player.x = nextX;
-        player.y = nextY;
+    // --- MOBS ---
+    const mobs = [];
+    const numMobs = 8;
+    const killerIndex = Math.floor(Math.random() * numMobs);
+    for (let i = 0; i < numMobs; i++) {
+      const mob = {
+        x: 0, y: 0,
+        color: i === killerIndex ? "red" : "lime",
+        speed: i === killerIndex ? 0.22 : 0.24,
+        radius: 14,
+        target: { x: Math.random() * canvas.width, y: Math.random() * canvas.height }
+      };
+      spawnSafe(mob, mob.radius);
+      mobs.push(mob);
+    }
+
+    // --- INPUT ---
+    const keys = {};
+    document.addEventListener("keydown", e => keys[e.key.toLowerCase()] = true);
+    document.addEventListener("keyup", e => keys[e.key.toLowerCase()] = false);
+
+    // --- TIMER ---
+    let totalTime = 230;
+    const timerEl = document.getElementById("timer");
+    function updateTimer(delta) {
+      totalTime -= delta / 1000;
+      if (totalTime < 0) totalTime = 0;
+      const minutes = Math.floor(totalTime / 60);
+      const seconds = Math.floor(totalTime % 60).toString().padStart(2, "0");
+      timerEl.textContent = `⏱ ${minutes}:${seconds}`;
+    }
+
+    // --- COLLISION RESOLVE ---
+    function resolveCollision(c, r) {
+      const closestX = Math.max(r.x, Math.min(c.x, r.x + r.w));
+      const closestY = Math.max(r.y, Math.min(c.y, r.y + r.h));
+      const dx = c.x - closestX;
+      const dy = c.y - closestY;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+      if (dist === 0) return;
+      const overlap = c.radius - dist;
+      if (overlap > 0) {
+        c.x += (dx / dist) * overlap;
+        c.y += (dy / dist) * overlap;
       }
     }
 
-    function collides(px, py, r) {
-      for (const wall of walls) {
-        if (px + r > wall.x && px - r < wall.x + wall.w &&
-            py + r > wall.y && py - r < wall.y + wall.h) {
-          return true;
+    // --- LOOP ---
+    let lastTime = 0;
+    function update(time) {
+      const delta = time - lastTime;
+      lastTime = time;
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      // Player movement
+      let dx = 0, dy = 0;
+      if (keys["w"]) dy -= 1;
+      if (keys["s"]) dy += 1;
+      if (keys["a"]) dx -= 1;
+      if (keys["d"]) dx += 1;
+      const len = Math.hypot(dx, dy);
+      if (len > 0) {
+        dx /= len; dy /= len;
+        player.x += dx * player.speed * delta;
+        player.y += dy * player.speed * delta;
+      }
+
+      // Mobs movement
+      for (const mob of mobs) {
+        const dx = mob.target.x - mob.x;
+        const dy = mob.target.y - mob.y;
+        const dist = Math.hypot(dx, dy);
+        if (dist > 2) {
+          mob.x += (dx / dist) * mob.speed * delta;
+          mob.y += (dy / dist) * mob.speed * delta;
+        } else {
+          mob.target = { x: Math.random() * canvas.width, y: Math.random() * canvas.height };
         }
       }
-      return false;
-    }
 
-    function moveMobs() {
-      mobs.forEach(m => {
-        m.x += (Math.random() - 0.5) * 1.5;
-        m.y += (Math.random() - 0.5) * 1.5;
-        m.x = Math.max(m.r, Math.min(canvas.width - m.r, m.x));
-        m.y = Math.max(m.r, Math.min(canvas.height - m.r, m.y));
-      });
-    }
+      // --- Collision with walls ---
+      for (const wall of walls) {
+        if (collideCircleRect(player, wall)) resolveCollision(player, wall);
+        for (const mob of mobs) {
+          if (collideCircleRect(mob, wall)) resolveCollision(mob, wall);
+        }
+      }
 
-    function drawCircle(e) {
+      // Draw walls
+      for (const wall of walls) {
+        ctx.fillStyle = wall.color;
+        ctx.fillRect(wall.x, wall.y, wall.w, wall.h);
+      }
+
+      // Draw mobs
+      for (const mob of mobs) {
+        ctx.beginPath();
+        ctx.arc(mob.x, mob.y, mob.radius, 0, Math.PI * 2);
+        ctx.fillStyle = mob.color;
+        ctx.fill();
+      }
+
+      // Draw player
       ctx.beginPath();
-      ctx.arc(e.x, e.y, e.r, 0, Math.PI * 2);
-      ctx.fillStyle = e.color;
+      ctx.arc(player.x, player.y, player.radius, 0, Math.PI * 2);
+      ctx.fillStyle = player.color;
       ctx.fill();
+
+      updateTimer(delta);
+      requestAnimationFrame(update);
     }
 
-    function drawWalls() {
-      walls.forEach(w => {
-        ctx.fillStyle = w.color;
-        ctx.fillRect(w.x, w.y, w.w, w.h);
-      });
-    }
-
-    function render() {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      drawWalls();
-      drawCircle(player);
-      mobs.forEach(drawCircle);
-    }
-
-    function loop() {
-      movePlayer();
-      moveMobs();
-      render();
-      requestAnimationFrame(loop);
-    }
-
-    loop();
+    requestAnimationFrame(update);
+    window.addEventListener("resize", () => {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    });
   </script>
 </body>
 </html>
