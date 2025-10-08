@@ -3,246 +3,35 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Wordscape - Level 1</title>
-<style>
-  * { margin: 0; padding: 0; box-sizing: border-box; }
-  body {
-    font-family: 'Poppins', sans-serif;
-    height: 100vh;
-    background: url('https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=1600&q=80') center/cover no-repeat;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    user-select: none;
-    overflow: hidden;
-  }
-
-  .overlay {
-    position: absolute;
-    inset: 0;
-    background: rgba(0,0,0,0.3);
-    backdrop-filter: blur(4px);
-  }
-
-  h1 {
-    color: white;
-    font-size: 2.5em;
-    margin-bottom: 20px;
-    z-index: 2;
-    text-shadow: 0 2px 8px rgba(0,0,0,0.8);
-  }
-
-  .board {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 10px;
-    z-index: 2;
-    margin-bottom: 50px;
-  }
-
-  .row {
-    display: flex;
-    gap: 10px;
-  }
-
-  .cell {
-    width: 60px;
-    height: 60px;
-    border-radius: 12px;
-    background: rgba(255,255,255,0.8);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 1.5em;
-    color: #333;
-    font-weight: bold;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.3);
-  }
-
-  .letters {
-    position: relative;
-    z-index: 3;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    gap: 30px;
-  }
-
-  .letter {
-    width: 80px;
-    height: 80px;
-    border-radius: 50%;
-    background: radial-gradient(circle at top left, #ffa74d, #ff6f00);
-    color: white;
-    font-size: 2em;
-    font-weight: bold;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.4);
-    cursor: pointer;
-    transition: transform 0.2s;
-  }
-  .letter:active { transform: scale(0.95); }
-
-  canvas {
-    position: absolute;
-    top: 0; left: 0;
-    z-index: 1;
-  }
-
-  button {
-    z-index: 2;
-    margin-top: 30px;
-    padding: 10px 20px;
-    border: none;
-    border-radius: 8px;
-    background: #4da3ff;
-    color: white;
-    font-size: 1.2em;
-    cursor: pointer;
-    box-shadow: 0 3px 8px rgba(0,0,0,0.3);
-  }
-  button:hover {
-    background: #2f8cff;
-  }
-</style>
+<title>Word Connect - Level 1</title>
+<link rel="stylesheet" href="style.css">
 </head>
 <body>
-<div class="overlay"></div>
-<h1>Wordscape - Level 1</h1>
+<div class="game-container">
+  <div class="grid-container">
+    <div id="grid">
+      <div class="cell">W</div>
+      <div class="cell">O</div>
+      <div class="cell">R</div>
+      <div class="cell">D</div>
+    </div>
+  </div>
 
-<div class="board">
-  <div class="row">
-    <div class="cell" data-word="WORD" data-index="0"></div>
-    <div class="cell" data-word="WORD" data-index="1"></div>
-    <div class="cell" data-word="WORD" data-index="2"></div>
-    <div class="cell" data-word="WORD" data-index="3"></div>
+  <div class="word-list">
+    <h3>Found Words</h3>
+    <ul id="found-words"></ul>
   </div>
-  <div class="row">
-    <div class="cell" data-word="ROW" data-index="0"></div>
-    <div class="cell" data-word="ROW" data-index="1"></div>
-    <div class="cell" data-word="ROW" data-index="2"></div>
-  </div>
-  <div class="row">
-    <div class="cell" data-word="DO" data-index="0"></div>
-    <div class="cell" data-word="DO" data-index="1"></div>
+
+  <canvas id="lineCanvas"></canvas>
+
+  <div class="circle-container" id="letters">
+    <div class="letter" data-letter="W">W</div>
+    <div class="letter" data-letter="O">O</div>
+    <div class="letter" data-letter="R">R</div>
+    <div class="letter" data-letter="D">D</div>
   </div>
 </div>
 
-<canvas id="lineCanvas"></canvas>
-
-<div class="letters" id="letters"></div>
-<button id="shuffleBtn">🔄 Shuffle</button>
-
-<script>
-const words = ["WORD","ROW","DO"];
-let letters = Array.from(new Set(words.join('').split('')));
-const lettersDiv = document.getElementById('letters');
-const canvas = document.getElementById('lineCanvas');
-const ctx = canvas.getContext('2d');
-canvas.width = window.innerWidth;
-canvas.height = window.innerHeight;
-
-let selected = [];
-let dragging = false;
-let currentMouse = {x:0, y:0};
-
-function drawLine(from, to, glow=false) {
-  ctx.strokeStyle = glow ? "rgba(0,200,255,0.8)" : "rgba(255,255,255,0.5)";
-  ctx.lineWidth = 8;
-  ctx.shadowColor = "rgba(0,255,255,0.7)";
-  ctx.shadowBlur = glow ? 15 : 0;
-  ctx.beginPath();
-  ctx.moveTo(from.x, from.y);
-  ctx.lineTo(to.x, to.y);
-  ctx.stroke();
-}
-
-function redrawLines() {
-  ctx.clearRect(0,0,canvas.width,canvas.height);
-  for (let i=0;i<selected.length-1;i++) {
-    drawLine(selected[i].center, selected[i+1].center, true);
-  }
-  if (dragging && selected.length>0) {
-    drawLine(selected[selected.length-1].center, currentMouse, false);
-  }
-}
-
-function shuffleLetters() {
-  letters.sort(()=>Math.random()-0.5);
-  renderLetters();
-}
-
-function renderLetters() {
-  lettersDiv.innerHTML = '';
-  letters.forEach(l=>{
-    const el = document.createElement('div');
-    el.className='letter';
-    el.textContent=l;
-    lettersDiv.appendChild(el);
-  });
-}
-renderLetters();
-
-lettersDiv.addEventListener('mousedown', startDrag);
-lettersDiv.addEventListener('touchstart', startDrag);
-window.addEventListener('mousemove', moveDrag);
-window.addEventListener('touchmove', moveDrag);
-window.addEventListener('mouseup', endDrag);
-window.addEventListener('touchend', endDrag);
-document.getElementById('shuffleBtn').addEventListener('click', shuffleLetters);
-
-function getCenter(el) {
-  const rect = el.getBoundingClientRect();
-  return {x: rect.left+rect.width/2, y: rect.top+rect.height/2};
-}
-
-function startDrag(e) {
-  e.preventDefault();
-  dragging=true;
-  selected=[];
-  const target = document.elementFromPoint(
-    e.touches?e.touches[0].clientX:e.clientX,
-    e.touches?e.touches[0].clientY:e.clientY
-  );
-  if(target.classList.contains('letter')){
-    selected.push({letter: target.textContent, center: getCenter(target)});
-  }
-}
-
-function moveDrag(e) {
-  if(!dragging) return;
-  const x = e.touches?e.touches[0].clientX:e.clientX;
-  const y = e.touches?e.touches[0].clientY:e.clientY;
-  currentMouse = {x,y};
-  const target = document.elementFromPoint(x,y);
-  if(target && target.classList.contains('letter')) {
-    const letter = target.textContent;
-    if(!selected.find(s=>s.letter===letter && s.center.x===getCenter(target).x)){
-      selected.push({letter, center: getCenter(target)});
-    }
-  }
-  redrawLines();
-}
-
-function endDrag() {
-  if(!dragging) return;
-  dragging=false;
-  ctx.clearRect(0,0,canvas.width,canvas.height);
-  const formedWord = selected.map(s=>s.letter).join('');
-  if(words.includes(formedWord)){
-    document.querySelectorAll(`.cell[data-word="${formedWord}"]`).forEach((cell,i)=>{
-      cell.textContent = formedWord[i];
-    });
-    alert(`✅ You found: ${formedWord}`);
-  }
-  selected=[];
-}
-
-document.addEventListener('selectstart', e => e.preventDefault());
-</script>
+<script src="script.js"></script>
 </body>
 </html>
