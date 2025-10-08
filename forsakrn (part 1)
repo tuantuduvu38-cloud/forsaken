@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Forsaken - Menu</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: "Courier New", monospace;
+    }
+
+    body {
+      height: 100vh;
+      background: radial-gradient(circle at top, #1a0028, #000010);
+      color: #cfcfff;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      overflow: hidden;
+      user-select: none;
+    }
+
+    .container {
+      text-align: center;
+      animation: fadeIn 1.2s ease forwards;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    h1 {
+      font-size: 48px;
+      color: #b000ff;
+      text-shadow: 0 0 10px #b000ff, 0 0 30px #7000ff;
+      margin-bottom: 40px;
+    }
+
+    .btn {
+      display: block;
+      margin: 12px auto;
+      padding: 12px 28px;
+      font-size: 20px;
+      background: transparent;
+      color: #00ffee;
+      border: 2px solid #00ffee;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: all 0.3s;
+      text-shadow: 0 0 6px #00ffee;
+    }
+
+    .btn:hover {
+      background: #00ffee;
+      color: #0a0014;
+      box-shadow: 0 0 15px #00ffee;
+    }
+
+    .money {
+      position: absolute;
+      top: 20px;
+      right: 30px;
+      font-size: 20px;
+      color: #00ffb3;
+      text-shadow: 0 0 8px #00ffb3;
+    }
+
+    /* SHOP & INVENTORY OVERLAYS */
+    .overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.85);
+      display: none;
+      justify-content: center;
+      align-items: center;
+      flex-direction: column;
+      color: #fff;
+      z-index: 10;
+    }
+
+    .overlay.active {
+      display: flex;
+      animation: fadeIn 0.5s ease;
+    }
+
+    .overlay h2 {
+      color: #a200ff;
+      text-shadow: 0 0 10px #a200ff;
+      margin-bottom: 20px;
+    }
+
+    .overlay .close {
+      margin-top: 30px;
+      padding: 8px 20px;
+      font-size: 18px;
+      background: transparent;
+      border: 1px solid #ff00ff;
+      color: #ff00ff;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: 0.3s;
+    }
+
+    .overlay .close:hover {
+      background: #ff00ff;
+      color: #000;
+    }
+
+    /* Neon flicker effect */
+    @keyframes flicker {
+      0%, 18%, 22%, 25%, 53%, 57%, 100% {
+        text-shadow: 0 0 5px #b000ff, 0 0 20px #a000ff, 0 0 40px #7000ff;
+      }
+      20%, 24%, 55% {
+        text-shadow: none;
+      }
+    }
+
+    h1.flicker {
+      animation: flicker 3s infinite;
+    }
+  </style>
+</head>
+<body>
+  <div class="money">$ 120</div>
+
+  <div class="container">
+    <h1 class="flicker">FORSAKEN</h1>
+    <button class="btn" id="playBtn">▶ Play</button>
+    <button class="btn" id="shopBtn">🛒 Shop</button>
+    <button class="btn" id="inventoryBtn">🎒 Inventory</button>
+  </div>
+
+  <!-- SHOP OVERLAY -->
+  <div id="shopOverlay" class="overlay">
+    <h2>Forsaken Shop</h2>
+    <p>Coming soon — unlock new survivors & killers here.</p>
+    <button class="close" onclick="toggleOverlay('shopOverlay', false)">Close</button>
+  </div>
+
+  <!-- INVENTORY OVERLAY -->
+  <div id="inventoryOverlay" class="overlay">
+    <h2>Your Inventory</h2>
+    <p>No items yet. Earn rewards by surviving.</p>
+    <button class="close" onclick="toggleOverlay('inventoryOverlay', false)">Close</button>
+  </div>
+
+  <script>
+    const playBtn = document.getElementById('playBtn');
+    const shopBtn = document.getElementById('shopBtn');
+    const inventoryBtn = document.getElementById('inventoryBtn');
+
+    playBtn.addEventListener('click', () => {
+      alert('Bắt đầu trò chơi... (tạm thời để test)');
+    });
+
+    shopBtn.addEventListener('click', () => toggleOverlay('shopOverlay', true));
+    inventoryBtn.addEventListener('click', () => toggleOverlay('inventoryOverlay', true));
+
+    function toggleOverlay(id, show) {
+      const overlay = document.getElementById(id);
+      overlay.classList.toggle('active', show);
+    }
+  </script>
+</body>
+</html>
