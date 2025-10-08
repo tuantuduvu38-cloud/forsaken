@@ -5,116 +5,176 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Wordscape - Level 1</title>
 <style>
+  * { box-sizing: border-box; }
   body {
-    background: #f3f6ff;
-    font-family: 'Poppins', sans-serif;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    height: 100vh;
     margin: 0;
-  }
-  h1 { margin-bottom: 10px; }
-  #game {
+    height: 100vh;
     display: flex;
-    flex-direction: column;
+    justify-content: center;
     align-items: center;
+    background: linear-gradient(to top, #a0d8ef 0%, #ffffff 90%);
+    overflow: hidden;
+    font-family: "Poppins", sans-serif;
+  }
+  #game {
+    position: relative;
+    width: 420px;
+    height: 700px;
+    background: linear-gradient(to top, #79c3ff 0%, #eaf6ff 100%);
+    border-radius: 30px;
+    box-shadow: 0 0 30px rgba(0,0,0,0.2);
+    overflow: hidden;
+  }
+  #background {
+    position: absolute;
+    bottom: 0;
+    width: 100%;
+    height: 180px;
+    background: linear-gradient(to top, #4aa96c 0%, #a4e4a0 100%);
+    border-top-left-radius: 50% 30px;
+    border-top-right-radius: 50% 30px;
+  }
+  h1 {
+    text-align: center;
+    color: #ffffff;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+    margin-top: 20px;
   }
   #letters {
-    position: relative;
-    width: 220px;
-    height: 220px;
-    border-radius: 50%;
+    position: absolute;
+    bottom: 140px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 280px;
+    height: 280px;
   }
   .letter {
     position: absolute;
-    width: 70px;
-    height: 70px;
-    background: white;
+    width: 80px;
+    height: 80px;
+    background: radial-gradient(circle at top, #ffffff, #ddeaff);
     border-radius: 50%;
-    border: 3px solid #667;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 28px;
+    border: 3px solid #5b8fff;
+    box-shadow: 0 0 15px rgba(0,0,0,0.2);
+    font-size: 30px;
     font-weight: bold;
-    cursor: pointer;
+    color: #2c3e50;
+    display: flex;
+    justify-content: center;
+    align-items: center;
     user-select: none;
-    transition: background 0.2s, color 0.2s;
+    cursor: pointer;
+    transition: transform 0.1s, background 0.2s;
   }
   .letter.active {
-    background: #4a7cff;
+    background: #5b8fff;
     color: white;
+    transform: scale(1.1);
   }
   #word-list {
-    margin-top: 20px;
+    position: absolute;
+    top: 120px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 260px;
     display: flex;
     flex-direction: column;
+    align-items: center;
     gap: 5px;
   }
   .word {
-    font-size: 22px;
+    font-size: 26px;
     letter-spacing: 5px;
+    color: #1c3d5a;
+    background: rgba(255,255,255,0.6);
+    padding: 6px 12px;
+    border-radius: 10px;
+    width: 180px;
+    text-align: center;
   }
   #shuffle {
-    margin-top: 25px;
-    padding: 8px 16px;
-    background: #4a7cff;
+    position: absolute;
+    bottom: 60px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #5b8fff;
     color: white;
     border: none;
-    border-radius: 8px;
+    border-radius: 10px;
+    padding: 10px 24px;
+    font-size: 18px;
     cursor: pointer;
-    font-size: 16px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.2);
   }
+  #shuffle:active { transform: translateX(-50%) scale(0.95); }
   #message {
-    font-size: 28px;
-    margin-top: 20px;
-    color: #1d8b1d;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 32px;
+    font-weight: bold;
+    color: #ffffff;
+    text-shadow: 0 2px 8px rgba(0,0,0,0.4);
     display: none;
   }
   canvas {
     position: absolute;
-    top: 0; left: 0;
+    bottom: 140px;
+    left: 50%;
+    transform: translateX(-50%);
     pointer-events: none;
   }
 </style>
 </head>
 <body>
-<h1>Wordscape - Level 1</h1>
-<div id="game">
-  <div id="letters"></div>
-  <canvas id="lineCanvas" width="220" height="220"></canvas>
-  <button id="shuffle">🔀 Shuffle</button>
-  <div id="word-list"></div>
-  <div id="message">Level Complete!</div>
-</div>
+  <div id="game">
+    <h1>Level 1: WORD</h1>
+    <div id="background"></div>
+    <div id="letters"></div>
+    <canvas id="lineCanvas" width="280" height="280"></canvas>
+    <div id="word-list"></div>
+    <button id="shuffle">🔀 Shuffle</button>
+    <div id="message">Level Complete!</div>
+  </div>
 
 <script>
 const words = ["WORD", "ROW", "DO", "OR"];
-let foundWords = new Set();
+const foundWords = new Set();
 let letters = ["W", "O", "R", "D"];
-const letterPositions = [
-  [110, 10],
-  [210, 110],
-  [110, 210],
-  [10, 110]
-];
-
-const container = document.getElementById("letters");
+const radius = 110;
+const center = 140;
+const letterContainer = document.getElementById("letters");
 const canvas = document.getElementById("lineCanvas");
 const ctx = canvas.getContext("2d");
 const wordList = document.getElementById("word-list");
 const message = document.getElementById("message");
 
-letters.forEach((l, i) => {
-  const div = document.createElement("div");
-  div.className = "letter";
-  div.textContent = l;
-  div.style.left = (letterPositions[i][0]-35) + "px";
-  div.style.top = (letterPositions[i][1]-35) + "px";
-  container.appendChild(div);
-});
+const bgMusic = new Audio("https://cdn.pixabay.com/audio/2023/03/01/audio_5bff9e9321.mp3");
+bgMusic.loop = true;
+bgMusic.volume = 0.2;
+bgMusic.play();
+
+const clickSound = new Audio("https://cdn.pixabay.com/audio/2022/03/15/audio_1b8b7e88ac.mp3");
+const correctSound = new Audio("https://cdn.pixabay.com/audio/2022/03/15/audio_5f6fa1b3bb.mp3");
+const winSound = new Audio("https://cdn.pixabay.com/audio/2022/10/27/audio_8f48a45e9c.mp3");
+
+function createLetters() {
+  letterContainer.innerHTML = "";
+  const step = (2 * Math.PI) / letters.length;
+  letters.forEach((ch, i) => {
+    const angle = step * i - Math.PI / 2;
+    const x = center + radius * Math.cos(angle) - 40;
+    const y = center + radius * Math.sin(angle) - 40;
+    const el = document.createElement("div");
+    el.className = "letter";
+    el.style.left = `${x}px`;
+    el.style.top = `${y}px`;
+    el.textContent = ch;
+    letterContainer.appendChild(el);
+  });
+}
+createLetters();
 
 let path = [];
 let drawing = false;
@@ -124,11 +184,11 @@ function drawLine() {
   if (path.length < 2) return;
   ctx.beginPath();
   ctx.moveTo(path[0][0], path[0][1]);
-  for (let i=1; i<path.length; i++) ctx.lineTo(path[i][0], path[i][1]);
+  for (let i = 1; i < path.length; i++) ctx.lineTo(path[i][0], path[i][1]);
   ctx.lineWidth = 6;
-  ctx.strokeStyle = "rgba(0, 128, 255, 0.8)";
-  ctx.shadowBlur = 12;
-  ctx.shadowColor = "deepskyblue";
+  ctx.strokeStyle = "rgba(100,180,255,0.9)";
+  ctx.shadowBlur = 10;
+  ctx.shadowColor = "#88caff";
   ctx.stroke();
 }
 
@@ -139,26 +199,30 @@ function checkWord(word) {
     el.className = "word";
     el.textContent = word;
     wordList.appendChild(el);
+    correctSound.currentTime = 0; correctSound.play();
   }
   if (foundWords.size === words.length) {
     message.style.display = "block";
+    winSound.play();
   }
 }
 
-container.addEventListener("mousedown", e => {
+letterContainer.addEventListener("mousedown", e => {
   if (e.target.classList.contains("letter")) {
     drawing = true;
     e.target.classList.add("active");
-    path = [[e.target.offsetLeft+35, e.target.offsetTop+35]];
+    path = [[e.target.offsetLeft + 40, e.target.offsetTop + 40]];
+    clickSound.currentTime = 0; clickSound.play();
   }
 });
 
-container.addEventListener("mousemove", e => {
+letterContainer.addEventListener("mousemove", e => {
   if (!drawing) return;
   const target = e.target;
   if (target.classList.contains("letter") && !target.classList.contains("active")) {
     target.classList.add("active");
-    path.push([target.offsetLeft+35, target.offsetTop+35]);
+    path.push([target.offsetLeft + 40, target.offsetTop + 40]);
+    clickSound.currentTime = 0; clickSound.play();
   }
   drawLine();
 });
@@ -171,16 +235,14 @@ document.addEventListener("mouseup", () => {
     checkWord(selected);
     document.querySelectorAll(".letter").forEach(l => l.classList.remove("active"));
     path = [];
-    ctx.clearRect(0,0,canvas.width,canvas.height);
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
   }
   drawing = false;
 });
 
 document.getElementById("shuffle").onclick = () => {
   letters.sort(() => Math.random() - 0.5);
-  document.querySelectorAll(".letter").forEach((l, i) => {
-    l.textContent = letters[i];
-  });
+  createLetters();
 };
 </script>
 </body>
