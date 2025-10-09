@@ -1,143 +1,140 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Wordscape</title>
-  <link rel="stylesheet" href="style.css" />
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Wordscape Demo</title>
+<style>
+  body {
+    margin: 0;
+    overflow: hidden;
+    background: url('https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=1920&q=80') no-repeat center center fixed;
+    background-size: cover;
+    font-family: 'Segoe UI', sans-serif;
+    user-select: none;
+  }
+  .overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(0,0,0,0.4);
+  }
+  .board {
+    position: absolute;
+    top: 5%;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    text-align: center;
+    color: white;
+    font-size: 28px;
+    letter-spacing: 6px;
+  }
+  .letters {
+    position: absolute;
+    bottom: 10%;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 15px;
+  }
+  .letter {
+    width: 70px;
+    height: 70px;
+    background: radial-gradient(circle at top left, #ffb347, #ffcc33);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 28px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: transform 0.1s;
+  }
+  .letter.active {
+    background: radial-gradient(circle at top left, #ff9966, #ff5e62);
+    transform: scale(1.1);
+  }
+  .word-display {
+    margin-top: 15px;
+    font-size: 24px;
+  }
+</style>
 </head>
 <body>
-  <div class="game-container">
-    <h1 class="title">WORDSCAPE</h1>
-    <canvas id="wordCanvas" width="400" height="400"></canvas>
-    <div class="letters">
-      <div class="circle" draggable="true">W</div>
-      <div class="circle" draggable="true">O</div>
-      <div class="circle" draggable="true">R</div>
-    </div>
-    <button id="shuffle">Shuffle</button>
-    <div class="found-words" id="foundWords"></div>
-  </div>
-  <audio id="bgm" loop autoplay>
-    <source src="https://cdn.pixabay.com/download/audio/2022/10/05/audio_23e7e2f96e.mp3?filename=lofi-study-112191.mp3" type="audio/mpeg">
-  </audio>
-  <script src="script.js"></script>
-</body>
-</html>
-body {
-  margin: 0;
-  font-family: 'Poppins', sans-serif;
-  background: linear-gradient(135deg, #8ec5fc, #e0c3fc);
-  height: 100vh;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
+<div class="overlay"></div>
 
-.game-container {
-  text-align: center;
-  color: #fff;
-}
+<div class="board" id="board">
+  <div>_ _ _ _</div>
+  <div>_ _ _</div>
+  <div>_ _</div>
+  <div>_ _</div>
+  <div class="word-display" id="currentWord"></div>
+</div>
 
-.title {
-  font-size: 48px;
-  letter-spacing: 3px;
-  margin-bottom: 30px;
-  text-shadow: 2px 2px 5px rgba(0,0,0,0.3);
-}
+<div class="letters" id="letters"></div>
 
-.letters {
-  display: flex;
-  justify-content: center;
-  margin: 20px;
-  gap: 15px;
-}
+<audio id="clickSound" src="https://cdn.pixabay.com/download/audio/2022/03/15/audio_58c10c12f8.mp3?filename=click-124467.mp3"></audio>
+<audio id="correctSound" src="https://cdn.pixabay.com/download/audio/2022/03/15/audio_f8d4deae3c.mp3?filename=correct-6033.mp3"></audio>
+<audio id="wrongSound" src="https://cdn.pixabay.com/download/audio/2022/03/15/audio_c9a82b6a3f.mp3?filename=error-126627.mp3"></audio>
+<audio id="bgm" src="https://cdn.pixabay.com/download/audio/2022/11/22/audio_eb6c089d0b.mp3?filename=relaxing-guitar-loop-12613.mp3" loop autoplay></audio>
 
-.circle {
-  width: 80px;
-  height: 80px;
-  background: white;
-  border-radius: 50%;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  font-size: 32px;
-  font-weight: bold;
-  color: #333;
-  cursor: grab;
-  box-shadow: 0 4px 10px rgba(0,0,0,0.3);
-  transition: transform 0.2s;
-}
-
-.circle:active {
-  transform: scale(1.2);
-  cursor: grabbing;
-}
-
-button {
-  background: #ffcc00;
-  border: none;
-  padding: 10px 25px;
-  border-radius: 20px;
-  font-size: 18px;
-  cursor: pointer;
-  transition: 0.3s;
-}
-
-button:hover {
-  background: #ffdb4d;
-}
-
-.found-words {
-  margin-top: 20px;
-  font-size: 22px;
-  color: #222;
-}
-
-canvas {
-  display: none;
-}
-const circles = document.querySelectorAll(".circle");
-const foundWords = document.getElementById("foundWords");
-const shuffleBtn = document.getElementById("shuffle");
-
-let dragging = false;
-let currentWord = "";
+<script>
+const letters = ['W','O','R','D'];
+const validWords = ['WORD','ROW','DO','OR'];
+let currentWord = '';
 let found = [];
 
-circles.forEach(circle => {
-  circle.addEventListener("mousedown", () => {
-    dragging = true;
-    currentWord = circle.textContent;
+const lettersContainer = document.getElementById('letters');
+const currentDisplay = document.getElementById('currentWord');
+const board = document.getElementById('board');
+const clickSound = document.getElementById('clickSound');
+const correctSound = document.getElementById('correctSound');
+const wrongSound = document.getElementById('wrongSound');
+const bgm = document.getElementById('bgm');
+
+bgm.volume = 0.4;
+
+letters.forEach(letter => {
+  const el = document.createElement('div');
+  el.className = 'letter';
+  el.textContent = letter;
+  el.addEventListener('click', () => {
+    clickSound.currentTime = 0; clickSound.play();
+    el.classList.add('active');
+    currentWord += letter;
+    currentDisplay.textContent = currentWord;
   });
-  
-  circle.addEventListener("mouseenter", () => {
-    if (dragging && !currentWord.includes(circle.textContent)) {
-      currentWord += circle.textContent;
-    }
-  });
+  lettersContainer.appendChild(el);
 });
 
-document.addEventListener("mouseup", () => {
-  dragging = false;
-  checkWord(currentWord);
-  currentWord = "";
-});
+document.body.addEventListener('mouseup', checkWord);
 
-shuffleBtn.addEventListener("click", () => {
-  const letters = Array.from(circles).map(c => c.textContent);
-  const shuffled = letters.sort(() => Math.random() - 0.5);
-  circles.forEach((c, i) => c.textContent = shuffled[i]);
-});
+function checkWord() {
+  if (!currentWord) return;
+  const word = currentWord.toUpperCase();
+  const elts = document.querySelectorAll('.letter');
+  elts.forEach(e => e.classList.remove('active'));
 
-function checkWord(word) {
-  const valid = ["ROW", "OR", "WOR"];
-  if (valid.includes(word) && !found.includes(word)) {
+  if (validWords.includes(word) && !found.includes(word)) {
     found.push(word);
-    renderWords();
+    correctSound.currentTime = 0; correctSound.play();
+    const children = board.children;
+    for (let i=0; i<children.length; i++) {
+      if (children[i].textContent.includes('_') && children[i].textContent.replace(/ /g,'').length === word.length) {
+        children[i].textContent = word.split('').join(' ');
+        break;
+      }
+    }
+  } else {
+    wrongSound.currentTime = 0; wrongSound.play();
   }
-}
 
-function renderWords() {
-  foundWords.innerHTML = found.join("<br>");
+  currentWord = '';
+  currentDisplay.textContent = '';
 }
+</script>
+</body>
+</html>
